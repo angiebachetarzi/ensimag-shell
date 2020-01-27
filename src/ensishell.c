@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/wait.h>
 
 #include "variante.h"
 #include "readcmd.h"
@@ -71,7 +72,7 @@ int main() {
 	while (1) {
 		struct cmdline *l;
 		char *line=0;
-		int i, j;
+		int i;
 		char *prompt = "ensishell>";
 
 		/* Readline use some internal memory structure that
@@ -122,12 +123,27 @@ int main() {
 		/* Display each command of the pipe */
 		for (i=0; l->seq[i]!=0; i++) {
 			char **cmd = l->seq[i];
-			printf("seq[%d]: ", i);
-                        for (j=0; cmd[j]!=0; j++) {
-                                printf("'%s' ", cmd[j]);
-                        }
-			printf("\n");
+			pid_t pid;
+			int status;
+			pid = fork();
+			switch (pid) {
+				case -1 : 
+					perror("error in fork\n");
+					break;
+				case 0 :
+					execvp(cmd[0], cmd);
+					break;
+				default :
+				if (!l -> bg) {
+					waitpid(pid, &status, 0);
+				} else {
+					//create a new process and add it to a list of processes
+				}
+					break;
+
+			}
 		}
+	
 	}
 
 }
